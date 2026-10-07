@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { MetricsBar } from './components/MetricsBar';
 import { FunctionsPanel } from './components/FunctionsPanel';
@@ -6,6 +6,7 @@ import { DisassemblyViewer } from './components/DisassemblyViewer';
 import { SectionsPanel } from './components/SectionsPanel';
 import { StringsPanel } from './components/StringsPanel';
 import { XrefsPanel } from './components/XrefsPanel';
+import { BinaryLoaderModal } from './components/BinaryLoaderModal';
 import { analysisClient } from './services/apiClient';
 import type {
   ActiveTab,
@@ -20,6 +21,8 @@ import type {
 export function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('functions');
   const [selectedFunction, setSelectedFunction] = useState<string>('entry0');
+  const [isLoaderOpen, setIsLoaderOpen] = useState(false);
+  const [isLive, setIsLive] = useState(false);
 
   const [metadata, setMetadata] = useState<BinaryMetadata | null>(null);
   const [sections, setSections] = useState<BinarySection[]>([]);
@@ -29,35 +32,40 @@ export function App() {
   const [xrefs, setXrefs] = useState<XRefData[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const serverStatus = await analysisClient.checkServerStatus();
+      setIsLive(serverStatus.online);
+
+      const [metaData, secData, funcData, strData, xrefData] = await Promise.all([
+        analysisClient.getMetadata(),
+        analysisClient.getSections(),
+        analysisClient.getFunctions(),
+        analysisClient.getStrings(),
+        analysisClient.getXrefs(selectedFunction || 'entry0'),
+      ]);
+
+      setMetadata(metaData);
+      setSections(secData);
+      setFunctions(funcData);
+      setStrings(strData);
+      setXrefs(xrefData);
+
+      const initialFunc = funcData.length > 0 ? funcData[0].name : 'entry0';
+      setSelectedFunction(initialFunc);
+      const disasm = await analysisClient.getDisassembly(initialFunc);
+      setDisassembly(disasm);
+    } catch (err) {
+      console.error('Failed to load analysis data:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedFunction]);
+
   // Initial Load
   useEffect(() => {
-    async function loadInitialData() {
-      try {
-        setLoading(true);
-        const [metaData, secData, funcData, strData, xrefData] = await Promise.all([
-          analysisClient.getMetadata(),
-          analysisClient.getSections(),
-          analysisClient.getFunctions(),
-          analysisClient.getStrings(),
-          analysisClient.getXrefs('entry0'),
-        ]);
-
-        setMetadata(metaData);
-        setSections(secData);
-        setFunctions(funcData);
-        setStrings(strData);
-        setXrefs(xrefData);
-
-        const disasm = await analysisClient.getDisassembly('entry0');
-        setDisassembly(disasm);
-      } catch (err) {
-        console.error('Failed to load analysis data:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadInitialData();
+    loadData();
   }, []);
 
   // Update disassembly when selected function changes
@@ -92,6 +100,9 @@ export function App() {
         activeTab={activeTab}
         onSelectTab={setActiveTab}
         metadata={metadata}
+        onOpenLoader={() => setIsLoaderOpen(true)}
+        isLive={isLive}
+        functionCount={functions.length}
       />
 
       {/* Main Content Area */}
@@ -141,6 +152,13 @@ export function App() {
           )}
         </main>
       </div>
+
+      {/* Binary Loader Modal */}
+      <BinaryLoaderModal
+        isOpen={isLoaderOpen}
+        onClose={() => setIsLoaderOpen(false)}
+        onBinaryLoaded={() => loadData()}
+      />
     </div>
   );
 }

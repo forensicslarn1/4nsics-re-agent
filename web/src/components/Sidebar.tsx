@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Layers,
   Code2,
@@ -8,6 +7,7 @@ import {
   Binary,
   Radio,
   Cpu,
+  FolderOpen,
 } from 'lucide-react';
 import type { ActiveTab, BinaryMetadata } from '../types';
 
@@ -15,12 +15,18 @@ interface SidebarProps {
   activeTab: ActiveTab;
   onSelectTab: (tab: ActiveTab) => void;
   metadata: BinaryMetadata;
+  onOpenLoader: () => void;
+  isLive: boolean;
+  functionCount: number;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onSelectTab,
   metadata,
+  onOpenLoader,
+  isLive,
+  functionCount,
 }) => {
   const navItems = [
     {
@@ -28,7 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Functions',
       arabicLabel: 'قائمة الدوال',
       icon: Code2,
-      count: '9',
+      count: String(functionCount),
     },
     {
       id: 'sections' as ActiveTab,
@@ -77,8 +83,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-3 mx-3 mt-3 rounded-lg bg-slate-950/60 border border-slate-800/80">
         <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
           <span className="flex items-center gap-1.5">
-            <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
-            Active Target
+            <Radio
+              className={`w-3 h-3 ${isLive ? 'text-emerald-400 animate-pulse' : 'text-amber-400'}`}
+            />
+            {isLive ? 'Live Engine' : 'Demo Mode'}
           </span>
           <span className="font-mono text-emerald-400 font-semibold uppercase text-[10px]">
             {metadata.format}
@@ -95,6 +103,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {metadata.humanSize}
           </span>
         </div>
+
+        {/* Load / Open Binary Button */}
+        <button
+          onClick={onOpenLoader}
+          className="w-full mt-3 py-1.5 px-3 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 hover:border-purple-500/50 text-xs font-mono font-semibold flex items-center justify-center gap-2 transition-all shadow-sm"
+        >
+          <FolderOpen className="w-3.5 h-3.5" />
+          <span>Open / Upload Binary</span>
+        </button>
       </div>
 
       {/* Navigation Links */}
@@ -140,11 +157,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-3 border-t border-slate-800 bg-slate-950/40 text-[11px] text-slate-400 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Cpu className="w-3.5 h-3.5 text-indigo-400" />
-          <span className="font-mono text-[10px]">MCP Stdio: OK</span>
+          <span className="font-mono text-[10px]">
+            {isLive ? 'Bridge: Connected' : 'Bridge: Standalone'}
+          </span>
         </div>
         <div className="flex items-center gap-1 text-[10px] text-slate-500">
           <ShieldAlert className="w-3 h-3 text-amber-400" />
-          <span>v1.0.0</span>
+          <span>v1.1.0</span>
         </div>
       </div>
     </aside>
