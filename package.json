@@ -1,0 +1,32 @@
+{
+  "name": "4nsics-re-agent",
+  "version": "1.0.0",
+  "description": "Binary analysis and forensics MCP agent using radare2",
+  "main": "dist/mcp-server.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/mcp-server.js",
+    "dev": "tsx src/mcp-server.ts",
+    "test": "tsx test/test-server.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "mcp",
+    "radare2",
+    "reverse-engineering",
+    "binary-analysis",
+    "forensics"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "r2pipe": "^2.8.6"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}
