@@ -34,3 +34,31 @@ export interface FilterOptions {
   query?: string;
   excludeImports?: boolean;
 }
+
+export interface XRefData {
+  from: number;
+  to: number | string;
+  type: string;
+  opcode?: string;
+  fcn_name?: string;
+  fcn_addr?: number;
+  direction?: 'to' | 'from';
+}
+
+export interface InstructionInfo {
+  offset: number;
+  opcode: string;
+  bytes?: string;
+  size?: number;
+  type?: string;
+  jump?: number;
+  fail?: number;
+  disasm?: string;
+}
+
+export interface FunctionDisassembly {
+  name: string;
+  offset: number;
+  size: number;
+  instructions: InstructionInfo[];
+}

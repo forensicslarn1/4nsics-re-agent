@@ -78,6 +78,34 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: 'get_xrefs',
+        description: 'Retrieve cross-references to and from a specific function, address, or symbol (axtj / axfj)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            target: {
+              type: 'string',
+              description: 'Target function name, symbol, or hex address (e.g. entry0, 0x140003ab0)',
+            },
+          },
+          required: ['target'],
+        },
+      },
+      {
+        name: 'decompile_function',
+        description: 'Disassemble/decompile a function into structured assembly instructions and opcodes (pdfj)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            target: {
+              type: 'string',
+              description: 'Function name or memory address to disassemble (e.g. entry0, main, 0x140001000)',
+            },
+          },
+          required: ['target'],
+        },
+      },
+      {
         name: 'close_session',
         description: 'Safely close the active radare2 session and release resources',
         inputSchema: {
@@ -140,6 +168,39 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'get_sections': {
         const result = await analyzer.getSections();
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'get_xrefs': {
+        const target = String(args?.target || '');
+        if (!target) {
+          throw new Error("Parameter 'target' is required");
+        }
+        const result = await analyzer.getXrefs(target);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'decompile_function':
+      case 'disassemble_function': {
+        const target = String(args?.target || '');
+        if (!target) {
+          throw new Error("Parameter 'target' is required");
+        }
+        const result = await analyzer.disassembleFunction(target);
         return {
           content: [
             {
